@@ -1,0 +1,7 @@
+@use '../../../styles/variables' as *;
+
+.movie-card {
+  .movie-card__button {
+    float: right;
+  }
+}

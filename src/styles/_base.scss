@@ -1,0 +1,20 @@
+@use './_variables.scss' as *;
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: $primary-bg;
+  color: $text-color;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: $text-color;
+}
+
+a {
+  color: $accent-color;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
