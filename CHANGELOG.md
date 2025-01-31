@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.3](https://github.com/raymondjosephsotto/movie-app/compare/v0.0.2...v0.0.3) (2025-01-31)
+
+
+### Features
+
+* **mediacard:** added Modal component to MediaCard ([fd72dec](https://github.com/raymondjosephsotto/movie-app/commit/fd72dec04771e7e574e726337dab17df842c6863))
+
 ### [0.0.2](https://github.com/raymondjosephsotto/movie-app/compare/v0.0.1...v0.0.2) (2025-01-30)
 
 
