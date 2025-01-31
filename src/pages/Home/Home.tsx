@@ -1,101 +1,105 @@
-import { useState, useEffect } from 'react';
-import MovieCard from '../../components/common/MovieCard/MovieCard';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Media } from '../../types/mediaTypes';
+
+import MediaCard from '../../components/common/MediaCard/MediaCard';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid2';
 import Button from '@mui/material/Button';
-import Pagination from '@mui/material/Pagination'; // Import the Pagination component from MUI
 import movieApi from '../../api/movieApi';
 import './Home.module.scss';
 
-interface Movie {
+interface ApiResponseItem {
     id: number;
-    title: string;
+    title?: string;
+    name?: string;
     poster_path: string;
-    release_date: string;
-    item_count: number;
+    backdrop_path: string;
+    release_date?: string;
+    first_air_date?: string;
+    overview: string;
 }
 
 const Home = () => {
-    const [movies, setMovies] = useState<Movie[]>([]);
+    const [media, setMedia] = useState<Media[]>([]); // <-- More accurate name
     const [category, setCategory] = useState<'movie' | 'tv'>('movie'); // Default to 'movie'
     const [page, setPage] = useState<number>(1); // Track the current page
     const [totalPages, setTotalPages] = useState<number>(1); // Track the total pages
+    const observerRef = useRef<IntersectionObserver | null>(null); // Reference for infinite scrolling
+
+    const fetchMedia = useCallback(async () => {
+        if (page > totalPages) return;
+
+        console.log(`Fetching ${category}, page ${page}...`);
+        try {
+            const endpoint = `discover/${category}?page=${page}&sort_by=popularity.desc`;
+            const response = await movieApi.get(endpoint);
+
+            const normalizedData: Media[] = response.data.results.map((item: ApiResponseItem) => ({
+                id: item.id,
+                title: category === 'movie' ? item.title : item.name,
+                poster_path: item.poster_path,
+                backdrop_path: item.backdrop_path,
+                release_date: category === 'movie' ? item.release_date : item.first_air_date,
+                overview: item.overview,
+            }));
+
+            setMedia((prevMedia) => [...prevMedia, ...normalizedData]);
+            setTotalPages(response.data.total_pages);
+        } catch (error) {
+            console.error(`Error fetching ${category}:`, error);
+        }
+    }, [category, page, totalPages]);
 
     useEffect(() => {
-        const fetchMovies = async () => {
-            console.log(`Fetching ${category}, page ${page}...`);
-            try {
-                let endpoint = 'trending/all/week?language=en-US'; // Default to trending movies
-                if (category === 'movie') endpoint = `discover/movie?page=${page}`; // For movies filter
-                else if (category === 'tv') endpoint = `discover/tv?page=${page}`; // For TV shows filter
+        setMedia([]); // Clear movies when category changes
+        setPage(1); // Reset page to 1 when switching categories
+        fetchMedia();
+    }, [category, fetchMedia]);
 
-                const response = await movieApi.get(endpoint);
-                console.log('API Response:', response.data);
-                setMovies(response.data.results);
-                setTotalPages(response.data.total_pages); // Update total pages from API response
-            } catch (error) {
-                console.error(`Error fetching ${category}:`, error);
-            }
-        };
-
-        fetchMovies();
-    }, [category, page]); // Fetch when category or page changes
-
-    useEffect(() => {
-        // Reset page to 1 when the category changes
-        setPage(1);
-    }, [category]); // This runs when category changes
-
-    const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
-        setPage(value); // Update the page number when user clicks pagination
-    };
+    // Infinite Scroll with Intersection Observer
+    const lastMovieRef = useCallback((node: HTMLDivElement | null) => {
+        if (observerRef.current) observerRef.current.disconnect();
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setPage((prevPage) => prevPage + 1);
+                }
+            },
+            { threshold: 1.0 }
+        );
+        if (node) observerRef.current.observe(node);
+    }, []);
 
     return (
         <div className='home'>
             <Container maxWidth="xl" sx={{ marginTop: 5, marginBottom: 5 }}>
                 {/* Filter Buttons */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '25px', marginTop: '50px', marginBottom: '50px' }}>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                     <Button
                         variant={category === 'tv' ? 'contained' : 'outlined'}
                         onClick={() => setCategory('tv')}
-                        size="large"
                     >
                         TV Shows
                     </Button>
                     <Button
                         variant={category === 'movie' ? 'contained' : 'outlined'}
                         onClick={() => setCategory('movie')}
-                        size="large"
                     >
                         Movies
                     </Button>
                 </div>
 
                 <Grid container spacing={{ xs: 1, sm: 3, md: 4 }}>
-                    {movies?.map((movie) => (
-                        <Grid key={movie.id} size={{ xs: 1, sm: 3, md: 4 }}>
-                            <MovieCard movie={movie} />
+                    {media.map((item, index) => (
+                        <Grid
+                            key={`${category}-${item.id}`}
+                            size={{ xs: 2, md: 2 }}
+                            ref={index === media.length - 1 ? lastMovieRef : null} // Attach observer to the last movie
+                        >
+                            <MediaCard media={item} />
                         </Grid>
                     ))}
                 </Grid>
-
-                {/* Pagination */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', color: '#FFFFFF' }}>
-                    <Pagination
-                        count={totalPages} // Set total pages from API
-                        page={page} // Controlled by the current page state
-                        onChange={handlePageChange} // Handle page changes
-                        color="primary"
-                        sx={{
-                            '.MuiPaginationItem-root': {
-                                color: '#FFF', // Pagination numbers
-                            },
-                            '.MuiPaginationItem-ellipsis': {
-                                color: '#FFF', // Ellipsis color
-                            },
-                        }}
-                    />
-                </div>
             </Container>
         </div>
     );
