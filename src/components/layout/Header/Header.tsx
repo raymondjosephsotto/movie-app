@@ -6,7 +6,7 @@ const Header: React.FC = () => {
         <AppBar position='static'>
             <Toolbar>
                 <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
-                    Netflix Clone
+                    WatchWorthy
                 </Typography>
             </Toolbar>
         </AppBar>

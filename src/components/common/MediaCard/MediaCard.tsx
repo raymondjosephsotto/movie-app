@@ -38,15 +38,15 @@ const MediaCard: React.FC<MediaCardProps> = ({ media }) => {
     return (
         <>
             <Card className={styles['movie-card']}>
-                <CardHeader title={title} subheader={releaseYear} />
+                <CardHeader className={styles['movie-card__header']} title={title} subheader={releaseYear} />
                 <CardMedia
                     component="img"
-                    style={{ width: '100%', height: 'auto' }}
+                    className={styles['movie-card__img']}
                     image={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
                     alt={`${title} Image`}
                 />
-                <CardActions className={styles['movie-card__button']}>
-                    <Button onClick={handleOpen} size="medium" color="primary" variant="contained">
+                <CardActions className={styles['movie-card__button-container']}>
+                    <Button onClick={handleOpen} size="medium" color="primary" variant="contained" className={styles['movie-card__button']}>
                         Learn More
                     </Button>
                 </CardActions>

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Media } from '../../types/mediaTypes';
 
 import MediaCard from '../../components/common/MediaCard/MediaCard';
+import HeroCarousel from '../../components/common/HeroCarousel/HeroCarousel';
+
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid2';
 import Button from '@mui/material/Button';
@@ -72,6 +74,7 @@ const Home = () => {
 
     return (
         <div className='home'>
+            <HeroCarousel/>
             <Container maxWidth="xl" sx={{ marginTop: 5, marginBottom: 5 }}>
                 {/* Filter Buttons */}
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
