@@ -7,25 +7,24 @@ import 'swiper/swiper-bundle.css';
 import styles from './HeroCarousel.module.scss';
 
 interface HeroCarouselProps {
-    apiEndpoint?: string;
+    category: 'movie' | 'tv';
 }
 
-const API_ENDPOINT = '/trending/all/week';
-
-const HeroCarousel: React.FC<HeroCarouselProps> = ({ apiEndpoint = API_ENDPOINT }) => {
+const HeroCarousel: React.FC<HeroCarouselProps> = ({ category }) => {
     const [mediaItems, setMediaItems] = useState<Media[]>([]);
 
     useEffect(() => {
         const fetchMedia = async () => {
+            const apiEndpoint = `/trending/${category}/day`;
             try {
                 const response = await movieApi.get(apiEndpoint);
                 setMediaItems(response.data.results);
             } catch (error) {
-                console.error('Error fetching trending Movies & TV Shows', error);
+                console.error(`Error fetching trending ${category}`, error);
             }
         };
         fetchMedia();
-    }, [apiEndpoint]);
+    }, [category]);
 
     const isMovie = (media: Media): media is Movie => {
         return 'title' in media;
@@ -40,8 +39,8 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ apiEndpoint = API_ENDPOINT 
                 modules={[Autoplay, Pagination, A11y]}
                 pagination={{ clickable: true }}
                 autoplay={{
-                    delay: 5000,
-                    disableOnInteraction: false,
+                    delay: 8000,
+                    disableOnInteraction: true,
                 }}
             >
                 {mediaItems.map((media) => (
