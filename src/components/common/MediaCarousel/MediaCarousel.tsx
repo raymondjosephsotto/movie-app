@@ -1,42 +1,40 @@
 import { useState, useEffect } from 'react';
-import { Autoplay, Pagination, A11y } from 'swiper/modules';
+import { Autoplay, Navigation, A11y } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Media, Movie, TVShow } from '../../../types/mediaTypes';
+import { Media } from '../../../types/mediaTypes';
+import MediaCard from '../MediaCard/MediaCard';
 import movieApi from '../../../api/movieApi';
 import 'swiper/swiper-bundle.css';
 import styles from './MediaCarousel.module.scss';
 
 interface MediaCarouselProps {
-    apiEndpoint: string;
-    category: 'movie' | 'tv'; // Removed 'all'
+    title: string;
+    endpoint: string;
 }
 
-// Type guard function to check if media is a Movie
-const isMovie = (media: Media): media is Movie => {
-    return 'title' in media;
-};
-
-const MediaCarousel: React.FC<MediaCarouselProps> = ({ apiEndpoint, category }) => {
+const MediaCarousel: React.FC<MediaCarouselProps> = ({ title, endpoint }) => {
     const [mediaItems, setMediaItems] = useState<Media[]>([]);
 
     useEffect(() => {
         const fetchMedia = async () => {
             try {
-                const response = await movieApi.get(apiEndpoint);
+                const response = await movieApi.get(endpoint);
                 setMediaItems(response.data.results);
             } catch (error) {
-                console.error(`Error fetching ${category}`, error);
+                console.error(`Error fetching ${title}:`, error);
             }
         };
+
         fetchMedia();
-    }, [apiEndpoint, category]);
+    }, [endpoint, title]);
 
     return (
         <div className={styles.carouselContainer}>
-            <Swiper spaceBetween={50} slidesPerView={3} loop modules={[Autoplay, Pagination, A11y]} pagination={{ clickable: true }}>
+            <h2 className={styles.carouselTitle}>{title}</h2>
+            <Swiper spaceBetween={25} slidesPerView={6} modules={[Autoplay, Navigation, A11y]} navigation loop>
                 {mediaItems.map((media) => (
                     <SwiperSlide key={media.id} className={styles.slide}>
-                        <img src={`https://image.tmdb.org/t/p/w500${media.backdrop_path}`} alt={isMovie(media) ? media.title : (media as TVShow).name} />
+                        <MediaCard media={media} />
                     </SwiperSlide>
                 ))}
             </Swiper>

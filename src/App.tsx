@@ -7,6 +7,8 @@ import NotFound from './pages/NotFound/NotFound';
 const App = () => {
   const [category, setCategory] = useState<'movie' | 'tv'>('movie');
 
+  console.log('category:', category);
+
   return (
     <BrowserRouter>
       <Header category={category} setCategory={setCategory} />
