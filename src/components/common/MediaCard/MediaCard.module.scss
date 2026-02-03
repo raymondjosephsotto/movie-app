@@ -1,7 +1,18 @@
 @use '../../../styles/variables' as *;
 
 .movie-card {
-  .movie-card__button {
+  &__header{
+    min-height: 130px;
+  }
+  &__img{
+    width: 100%;
+    height: 100%;
+  }
+  &__button-container {
     float: right;
+  }
+
+  &__content{
+    font-size: 1rem;
   }
 }

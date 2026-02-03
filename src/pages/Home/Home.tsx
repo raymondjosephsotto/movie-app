@@ -1,105 +1,78 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Media } from '../../types/mediaTypes';
 
 import MediaCard from '../../components/common/MediaCard/MediaCard';
+import HeroCarousel from '../../components/common/HeroCarousel/HeroCarousel';
+import MediaCarousel from '../../components/common/MediaCarousel/MediaCarousel';
+
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid2';
-import Button from '@mui/material/Button';
+import Pagination from '@mui/material/Pagination';
 import movieApi from '../../api/movieApi';
-import './Home.module.scss';
+import styles from './Home.module.scss';
 
-interface ApiResponseItem {
-    id: number;
-    title?: string;
-    name?: string;
-    poster_path: string;
-    backdrop_path: string;
-    release_date?: string;
-    first_air_date?: string;
-    overview: string;
+const MOVIE_CAROUSELS = [
+    { title: 'Now Playing', endpoint: 'movie/now_playing?language=en-US&page=1' },
+    { title: 'Top Rated Movies', endpoint: 'movie/top_rated?language=en-US&page=1' },
+    { title: 'Upcoming Movies', endpoint: 'movie/upcoming?language=en-US&page=1' }
+];
+
+const TV_CAROUSELS = [
+    { title: 'Popular TV Shows', endpoint: 'tv/popular?language=en-US&page=1' },
+    { title: 'Top Rated TV Shows', endpoint: 'tv/top_rated?language=en-US&page=1' }
+];
+
+interface HomeProps {
+    category: 'movie' | 'tv';
 }
 
-const Home = () => {
-    const [media, setMedia] = useState<Media[]>([]); // <-- More accurate name
-    const [category, setCategory] = useState<'movie' | 'tv'>('movie'); // Default to 'movie'
-    const [page, setPage] = useState<number>(1); // Track the current page
-    const [totalPages, setTotalPages] = useState<number>(1); // Track the total pages
-    const observerRef = useRef<IntersectionObserver | null>(null); // Reference for infinite scrolling
-
-    const fetchMedia = useCallback(async () => {
-        if (page > totalPages) return;
-
-        console.log(`Fetching ${category}, page ${page}...`);
-        try {
-            const endpoint = `discover/${category}?page=${page}&sort_by=popularity.desc`;
-            const response = await movieApi.get(endpoint);
-
-            const normalizedData: Media[] = response.data.results.map((item: ApiResponseItem) => ({
-                id: item.id,
-                title: category === 'movie' ? item.title : item.name,
-                poster_path: item.poster_path,
-                backdrop_path: item.backdrop_path,
-                release_date: category === 'movie' ? item.release_date : item.first_air_date,
-                overview: item.overview,
-            }));
-
-            setMedia((prevMedia) => [...prevMedia, ...normalizedData]);
-            setTotalPages(response.data.total_pages);
-        } catch (error) {
-            console.error(`Error fetching ${category}:`, error);
-        }
-    }, [category, page, totalPages]);
+const Home: React.FC<HomeProps> = ({ category }) => {
+    const [media, setMedia] = useState<Media[]>([]);
+    const [page, setPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
 
     useEffect(() => {
-        setMedia([]); // Clear movies when category changes
-        setPage(1); // Reset page to 1 when switching categories
-        fetchMedia();
-    }, [category, fetchMedia]);
+        const fetchMedia = async () => {
+            try {
+                const endpoint = `discover/${category}?page=${page}&sort_by=popularity.desc`;
+                const response = await movieApi.get(endpoint);
+                setMedia(response.data.results);
+                setTotalPages(response.data.total_pages);
+            } catch (error) {
+                console.error(`Error fetching ${category}:`, error);
+            }
+        };
 
-    // Infinite Scroll with Intersection Observer
-    const lastMovieRef = useCallback((node: HTMLDivElement | null) => {
-        if (observerRef.current) observerRef.current.disconnect();
-        observerRef.current = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    setPage((prevPage) => prevPage + 1);
-                }
-            },
-            { threshold: 1.0 }
-        );
-        if (node) observerRef.current.observe(node);
-    }, []);
+        fetchMedia();
+    }, [category, page]);
 
     return (
         <div className='home'>
+            <HeroCarousel category={category} />
             <Container maxWidth="xl" sx={{ marginTop: 5, marginBottom: 5 }}>
-                {/* Filter Buttons */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                    <Button
-                        variant={category === 'tv' ? 'contained' : 'outlined'}
-                        onClick={() => setCategory('tv')}
-                    >
-                        TV Shows
-                    </Button>
-                    <Button
-                        variant={category === 'movie' ? 'contained' : 'outlined'}
-                        onClick={() => setCategory('movie')}
-                    >
-                        Movies
-                    </Button>
-                </div>
+                {/* Render multiple carousels dynamically */}
+                {(category === 'movie' ? MOVIE_CAROUSELS : TV_CAROUSELS).map(({ title, endpoint }) => (
+                    <MediaCarousel key={title} title={title} endpoint={endpoint} />
+                ))}
 
+                {/* Grid for browsing movies */}
                 <Grid container spacing={{ xs: 1, sm: 3, md: 4 }}>
-                    {media.map((item, index) => (
-                        <Grid
-                            key={`${category}-${item.id}`}
-                            size={{ xs: 2, md: 2 }}
-                            ref={index === media.length - 1 ? lastMovieRef : null} // Attach observer to the last movie
-                        >
+                    {media.map((item) => (
+                        <Grid key={`${category}-${item.id}`} size={{ xs: 6, md: 2 }}>
                             <MediaCard media={item} />
                         </Grid>
                     ))}
                 </Grid>
+
+                {/* Pagination */}
+                <Pagination
+                    className={styles.paginationContainer}
+                    count={totalPages}
+                    page={page}
+                    onChange={(_, value) => setPage(value)}
+                    size='small'
+                    color='primary'
+                />
             </Container>
         </div>
     );
